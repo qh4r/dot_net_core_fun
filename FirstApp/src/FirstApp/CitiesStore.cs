@@ -11,6 +11,8 @@ namespace FirstApp
     {
         public static CitiesStore CurrentStore { get; } = new CitiesStore();
 
+        public int MaxPointId => this.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
+
         public CitiesStore()
         {
             Cities = new List<CityDto>

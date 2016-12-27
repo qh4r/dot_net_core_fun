@@ -11,9 +11,9 @@ namespace FirstApp.Models
 
         public string Name { get; set; }
 
-        public string Description { get; set; }
+        public string Description { get; set; }        
 
-        public int NumberOfPoints => this.PointsOfInterest.Count;
+        public int NumberOfPoints => this.PointsOfInterest.Count;        
 
         public ICollection<PointOfInterestDto> PointsOfInterest { get; set; } = new List<PointOfInterestDto>();
     }

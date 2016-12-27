@@ -18,7 +18,7 @@ namespace FirstApp.Controllers
         {
             //return new JsonResult(CitiesStore.CurrentStore.Cities);
             // lepsze wyjscie
-            return new OkObjectResult(CitiesStore.CurrentStore.Cities);
+            return new OkObjectResult(CitiesStore.CurrentStore.Cities.Select(x => new { x.Id, x.Name, x.Description }));
         }
 
         // parametr matchuje po nazwach
@@ -28,7 +28,8 @@ namespace FirstApp.Controllers
             var data = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == id);
             if (data != null)
             {
-                return new OkObjectResult(data);
+                // dziala wykrywanie nazw propert!!!!!! ~taka destrukturyzacja
+                return new OkObjectResult(new { data.Id, data.Name, data.Description, NumberOfPoint = data.NumberOfPoints });
             }
             else
             {

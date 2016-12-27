@@ -6,12 +6,25 @@ namespace FirstApp.Controllers
     using System.Runtime.InteropServices.ComTypes;
 
     using FirstApp.Models;
+    using FirstApp.Services;
 
     using Microsoft.AspNetCore.JsonPatch;
+    using Microsoft.Extensions.Logging;
 
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        private ILogger<PointsOfInterestController> logger;
+
+        private readonly IDummyService sampleService;
+
+        //di
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger, IDummyService sampleService)
+        {
+            this.logger = logger;
+            this.sampleService = sampleService;
+        }
+
         [HttpGet("{id}/points")]
         public IActionResult GetPointsOfInterest(int id)
         {
@@ -22,6 +35,7 @@ namespace FirstApp.Controllers
             }
             else
             {
+                this.logger.LogInformation($"Miasto nie znalezione id: {id}");
                 return this.NotFound();
             }
         }
@@ -144,6 +158,7 @@ namespace FirstApp.Controllers
         [HttpDelete("{cityId}/points/{pointId}")]
         public IActionResult DeletePointOfInterest(int cityId, int pointId)
         {
+            this.sampleService.Act($"usuwamy {cityId}");
             var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId);
             var poi = city?.PointsOfInterest.FirstOrDefault(x => x.Id == pointId);
 

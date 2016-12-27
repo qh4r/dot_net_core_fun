@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 
 namespace FirstApp
 {
+    using FirstApp.Services;
+
     using Microsoft.AspNetCore.Mvc.Formatters;
     using Newtonsoft.Json.Serialization;
 
@@ -25,15 +27,18 @@ namespace FirstApp
                 .AddMvcOptions(x => x.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()))
                 // nadpisywanie formatowania jsona              
                 .AddJsonOptions(
-                x =>
-                    {
-                        if (x.SerializerSettings.ContractResolver != null)
+                    x =>
                         {
-                            var resolver = x.SerializerSettings.ContractResolver as DefaultContractResolver;
-                            resolver.NamingStrategy = new DefaultNamingStrategy(); // default to pascal case
-                        }
-                    });
-            // dodaje serwisy i je konfiguruje - do DI
+                            if (x.SerializerSettings.ContractResolver != null)
+                            {
+                                var resolver = x.SerializerSettings.ContractResolver as DefaultContractResolver;
+                                resolver.NamingStrategy = new DefaultNamingStrategy(); // default to pascal case
+                            }
+                        });
+            // dodaje serwisy i je konfiguruje - do DI                
+
+            // nie mozna dodawac do pielina, rejestracja serwisu
+            services.AddTransient<IDummyService, DummyService>();
         }
 
 
@@ -43,6 +48,9 @@ namespace FirstApp
         {
             //powyzej przyklady wbudowanych w .netcore web api seriwsow
             loggerFactory.AddConsole();
+
+            //dodatkowy logging
+            loggerFactory.AddDebug();
 
             if (env.IsDevelopment())
             {

@@ -5,7 +5,11 @@ using System.Threading.Tasks;
 
 namespace FirstApp.Controllers
 {
+    using AutoMapper;
+
     using FirstApp.Entities;
+    using FirstApp.Models;
+    using FirstApp.Services;
 
     using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +17,11 @@ namespace FirstApp.Controllers
     [Route("api/[controller]")]
     public class CitiesController : Controller
     {
-        private readonly CitiesDbContext citiesDbContext;
+        private readonly ICitiesDbRepository citiesDbRepository;
 
-        public CitiesController(CitiesDbContext citiesDbContext)
+        public CitiesController(ICitiesDbRepository citiesDbRepository)
         {
-            this.citiesDbContext = citiesDbContext;
+            this.citiesDbRepository = citiesDbRepository;
         }
 
         //[HttpGet("api/cities")]
@@ -27,24 +31,33 @@ namespace FirstApp.Controllers
         {
             //return new JsonResult(CitiesStore.CurrentStore.Cities);
             // lepsze wyjscie
-            return new OkObjectResult(CitiesStore.CurrentStore.Cities.Select(x => new { x.Id, x.Name, x.Description }));
-        }
-
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return this.Ok(this.citiesDbContext.Cities.ToList());
+            return new OkObjectResult(this.citiesDbRepository.GetCities().Select(x => new { x.Id, x.Name, x.Description }));
         }
 
         // parametr matchuje po nazwach
         [HttpGet("{id}")]
-        public IActionResult GetCity(int id)
+        public IActionResult GetCity(int id, bool includePts = false) // incudePts to query argument
         {
-            var data = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == id);
+            var data = this.citiesDbRepository.GetCity(id, true);
             if (data != null)
             {
+                if (includePts)
+                {
+                    var city = Mapper.Map<CityDto>(data);
+                    //var city = new CityDto { Id = data.Id, Name = data.Name, Description = data.Description };
+                    //foreach (var pointOfInterest in data.PointsOfInterest)
+                    //{
+                    //    city.PointsOfInterest.Add(new PointOfInterestDto
+                    //    {
+                    //        Id = pointOfInterest.Id,
+                    //        Name = pointOfInterest.Name,
+                    //        Description = pointOfInterest.Description
+                    //    });
+                    //}
+                    return new OkObjectResult(city);
+                }
                 // dziala wykrywanie nazw propert!!!!!! ~taka destrukturyzacja
-                return new OkObjectResult(new { data.Id, data.Name, data.Description, NumberOfPoint = data.NumberOfPoints });
+                return new OkObjectResult(new { data.Id, data.Name, data.Description, NumberOfPoint = data.PointsOfInterest.Count });
             }
             else
             {

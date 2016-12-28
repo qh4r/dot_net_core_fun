@@ -2,9 +2,13 @@
 
 namespace FirstApp.Controllers
 {
+    using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.InteropServices.ComTypes;
 
+    using AutoMapper;
+
+    using FirstApp.Entities;
     using FirstApp.Models;
     using FirstApp.Services;
 
@@ -19,20 +23,23 @@ namespace FirstApp.Controllers
 
         private readonly IDummyService sampleService;
 
+        private readonly ICitiesDbRepository citiesDbRepository;
+
         //di
-        public PointsOfInterestController(ILogger<PointsOfInterestController> logger, IDummyService sampleService)
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger, IDummyService sampleService, ICitiesDbRepository citiesDbRepository)
         {
             this.logger = logger;
             this.sampleService = sampleService;
+            this.citiesDbRepository = citiesDbRepository;
         }
 
         [HttpGet("{id}/points")]
         public IActionResult GetPointsOfInterest(int id)
         {
-            var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == id);
-            if (city != null)
+            if (this.citiesDbRepository.CityExists(id))
             {
-                return this.Ok(city.PointsOfInterest);
+                var pts = this.citiesDbRepository.GetPointOfInterests(id);
+                return this.Ok(Mapper.Map<IEnumerable<PointOfInterestDto>>(pts));
             }
             else
             {
@@ -45,10 +52,9 @@ namespace FirstApp.Controllers
         [HttpGet("{cityId}/points/{pointId}", Name = "GetPOI")]
         public IActionResult GetPointOfInterest(int cityId, int pointId)
         {
-            var poi =
-                CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId)?
-                    .PointsOfInterest.FirstOrDefault(x => x.Id == pointId);
-            return poi != null ? (IActionResult)this.Ok(poi) : this.NotFound();
+            var poi = this.citiesDbRepository.GetPointOfInterest(cityId, pointId);
+
+            return poi != null ? (IActionResult)this.Ok(Mapper.Map<PointOfInterestDto>(poi)) : this.NotFound();
         }
 
         [HttpPost("{cityId}/points")]
@@ -62,21 +68,19 @@ namespace FirstApp.Controllers
                 return this.BadRequest("you must provide data");
             }
 
-            var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId);
-
-            if (city == null)
+            if (!this.citiesDbRepository.CityExists(cityId))
             {
                 return this.NotFound();
             }
 
-            var newPoi = new PointOfInterestDto
+            var poiEntity = Mapper.Map<PointOfInterest>(pointofInterest);
+            this.citiesDbRepository.AddPointOfInterest(cityId, poiEntity);
+            if (this.citiesDbRepository.Save())
             {
-                Id = CitiesStore.CurrentStore.MaxPointId + 1,
-                Description = pointofInterest.Description,
-                Name = pointofInterest.Name
-            };
-            city.PointsOfInterest.Add(newPoi);
-            return this.CreatedAtRoute("GetPOI", new { cityId = city.Id, pointId = newPoi.Id }, newPoi);
+                var poiDto = Mapper.Map<PointOfInterestDto>(poiEntity);
+                return this.CreatedAtRoute("GetPOI", new { cityId, pointId = poiDto.Id }, poiDto);
+            }
+            return StatusCode(500, "blad podczas zapisu");
         }
 
 

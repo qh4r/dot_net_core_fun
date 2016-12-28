@@ -13,6 +13,7 @@ namespace FirstApp
     using System.Diagnostics;
 
     using FirstApp.Entities;
+    using FirstApp.Models;
     using FirstApp.Services;
 
     using Microsoft.AspNetCore.Mvc.Formatters;
@@ -59,11 +60,15 @@ namespace FirstApp
             // dodaje serwisy i je konfiguruje - do DI                
 
             // nie mozna dodawac do pielina, rejestracja serwisu
-            services.AddTransient<IDummyService, DummyService>();
+            services.AddTransient<IDummyService, DummyService>(); // transient tworzy serwis przy kazdym requescie
+            //scoped tworzy raz na request
+            //singelton przy peirwszym requescie            
 
             // poziom glebiej w strukturze jsona przez dwukropek
             var connectionString = Configuration["connectionStrings:citiesDbConnectionString"];
             services.AddDbContext<CitiesDbContext>(x => x.UseSqlServer(connectionString));
+
+            services.AddScoped<ICitiesDbRepository, CitiesDbRepository>();
         }
 
 
@@ -90,6 +95,14 @@ namespace FirstApp
             // np 
             //Status Code: 404; Not Found
             app.UseStatusCodePages();
+
+            AutoMapper.Mapper.Initialize(
+                x =>
+                    {
+                        x.CreateMap<City, CityDto>();
+                        x.CreateMap<PointOfInterest, PointOfInterestDto>();
+                        x.CreateMap<PointOfIntrestCreationDto, PointOfInterest>();
+                    });
 
             app.UseMvc();
             

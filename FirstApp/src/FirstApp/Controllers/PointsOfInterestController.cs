@@ -14,6 +14,7 @@ namespace FirstApp.Controllers
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        //wymaga add logging w startupie
         private ILogger<PointsOfInterestController> logger;
 
         private readonly IDummyService sampleService;

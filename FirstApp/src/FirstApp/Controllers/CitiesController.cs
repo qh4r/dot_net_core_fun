@@ -5,12 +5,21 @@ using System.Threading.Tasks;
 
 namespace FirstApp.Controllers
 {
+    using FirstApp.Entities;
+
     using Microsoft.AspNetCore.Mvc;
 
     //[controller] to w tym wypadku cities - matchuje po nazwie
     [Route("api/[controller]")]
     public class CitiesController : Controller
     {
+        private readonly CitiesDbContext citiesDbContext;
+
+        public CitiesController(CitiesDbContext citiesDbContext)
+        {
+            this.citiesDbContext = citiesDbContext;
+        }
+
         //[HttpGet("api/cities")]
         // wyciagniety route
         [HttpGet()]
@@ -19,6 +28,12 @@ namespace FirstApp.Controllers
             //return new JsonResult(CitiesStore.CurrentStore.Cities);
             // lepsze wyjscie
             return new OkObjectResult(CitiesStore.CurrentStore.Cities.Select(x => new { x.Id, x.Name, x.Description }));
+        }
+
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return this.Ok(this.citiesDbContext.Cities.ToList());
         }
 
         // parametr matchuje po nazwach

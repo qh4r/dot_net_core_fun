@@ -101,6 +101,7 @@ namespace FirstApp
                     {
                         x.CreateMap<City, CityDto>();
                         x.CreateMap<PointOfInterest, PointOfInterestDto>();
+                        x.CreateMap<PointOfInterest, PointOfIntrestCreationDto>();
                         x.CreateMap<PointOfIntrestCreationDto, PointOfInterest>();
                     });
 

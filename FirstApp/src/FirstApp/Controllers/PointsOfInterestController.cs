@@ -38,7 +38,7 @@ namespace FirstApp.Controllers
         {
             if (this.citiesDbRepository.CityExists(id))
             {
-                var pts = this.citiesDbRepository.GetPointOfInterests(id);
+                var pts = this.citiesDbRepository.GetPointsOfInterestList(id);
                 return this.Ok(Mapper.Map<IEnumerable<PointOfInterestDto>>(pts));
             }
             else
@@ -80,7 +80,7 @@ namespace FirstApp.Controllers
                 var poiDto = Mapper.Map<PointOfInterestDto>(poiEntity);
                 return this.CreatedAtRoute("GetPOI", new { cityId, pointId = poiDto.Id }, poiDto);
             }
-            return StatusCode(500, "blad podczas zapisu");
+            return this.StatusCode(500, "blad podczas zapisu");
         }
 
 
@@ -92,23 +92,30 @@ namespace FirstApp.Controllers
                 return this.BadRequest("you must provide data");
             }
 
-            var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId);
 
-            if (city == null)
+            if (!this.citiesDbRepository.CityExists(cityId))
             {
                 return this.NotFound();
             }
 
-            var oldPoi = city.PointsOfInterest.FirstOrDefault(x => x.Id == pointId);
+            var oldPoi = this.citiesDbRepository.GetPointOfInterest(cityId, pointId);
             if (oldPoi == null)
             {
                 return this.NotFound();
             }
 
-            oldPoi.Description = pointofInterest.Description ?? oldPoi.Description;
-            oldPoi.Name = pointofInterest.Name ?? oldPoi.Name;
+            // updatuje encje nowymi danymi
+            Mapper.Map(pointofInterest, oldPoi);
 
-            return this.CreatedAtRoute("GetPOI", new { cityId = city.Id, pointId = oldPoi.Id }, oldPoi);
+
+            //oldPoi.Description = pointofInterest.Description ?? oldPoi.Description;
+            //oldPoi.Name = pointofInterest.Name ?? oldPoi.Name;
+            if (this.citiesDbRepository.Save())
+            {
+                var poiDto = Mapper.Map<PointOfInterestDto>(oldPoi);
+                return this.CreatedAtRoute("GetPOI", new { cityId, pointId = poiDto.Id }, poiDto);
+            }
+            return this.StatusCode(500, "blad podczas zapisu");
         }
 
 
@@ -127,20 +134,20 @@ namespace FirstApp.Controllers
                 return this.BadRequest("you must provide data");
             }
 
-            var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId);
-
-            if (city == null)
+            if (!this.citiesDbRepository.CityExists(cityId))
             {
                 return this.NotFound();
             }
 
-            var oldPoi = city.PointsOfInterest.FirstOrDefault(x => x.Id == pointId);
+            var oldPoi = this.citiesDbRepository.GetPointOfInterest(cityId, pointId);
             if (oldPoi == null)
             {
                 return this.NotFound();
             }
+            var pointToPatch = new PointOfIntrestCreationDto();
 
-            var pointToPatch = new PointOfIntrestCreationDto { Name = oldPoi.Name, Description = oldPoi.Description };
+            Mapper.Map(oldPoi, pointToPatch);
+
 
             // dzieki przekazaniu model state wszelkie bledy zostana na niego tez zappliowane. 2 argument to cel do apply bledow
             patchDocument.ApplyTo(pointToPatch, this.ModelState);
@@ -154,27 +161,36 @@ namespace FirstApp.Controllers
                 return this.BadRequest(this.ModelState);
             }
 
-            oldPoi.Description = pointToPatch.Description ?? oldPoi.Description;
-            oldPoi.Name = pointToPatch.Name ?? oldPoi.Name;
-
-            return this.CreatedAtRoute("GetPOI", new { cityId = city.Id, pointId = oldPoi.Id }, oldPoi);
+            Mapper.Map(pointToPatch, oldPoi);
+            if (this.citiesDbRepository.Save())
+            {
+                var poiDto = Mapper.Map<PointOfInterestDto>(oldPoi);
+                return this.CreatedAtRoute("GetPOI", new { cityId, pointId = poiDto.Id }, poiDto);
+            }
+            return this.StatusCode(500, "blad podczas zapisu");
         }
 
         [HttpDelete("{cityId}/points/{pointId}")]
         public IActionResult DeletePointOfInterest(int cityId, int pointId)
         {
             this.sampleService.Act($"usuwamy {cityId}");
-            var city = CitiesStore.CurrentStore.Cities.FirstOrDefault(x => x.Id == cityId);
-            var poi = city?.PointsOfInterest.FirstOrDefault(x => x.Id == pointId);
+            if (!this.citiesDbRepository.CityExists(cityId))
+            {
+                return this.NotFound();
+            }
+            var poi = this.citiesDbRepository.GetPointOfInterest(cityId, pointId);
 
             if (poi == null)
             {
                 return this.NotFound();
             }
 
-            city.PointsOfInterest.Remove(poi);
-
-            return this.NoContent();
+            this.citiesDbRepository.DeletePointOfInterest(poi);
+            if (this.citiesDbRepository.Save())
+            {
+                return this.NoContent();
+            }
+            return this.StatusCode(500, "blad podczas zapisu");
         }
     }
 }

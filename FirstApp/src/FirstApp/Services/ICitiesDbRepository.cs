@@ -15,12 +15,14 @@ namespace FirstApp.Services
 
         City GetCity(int city, bool includePoints);
 
-        IEnumerable<PointOfInterest> GetPointOfInterests(int cityId);
+        IEnumerable<PointOfInterest> GetPointsOfInterestList(int cityId);
 
         PointOfInterest GetPointOfInterest(int cityId, int pointId);
 
         void AddPointOfInterest(int cityId, PointOfInterest poiEntity);
 
         bool Save();
+
+        void DeletePointOfInterest(PointOfInterest poi);
     }
 }

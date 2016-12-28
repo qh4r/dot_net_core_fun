@@ -37,7 +37,7 @@ namespace FirstApp.Services
             return this.context.Cities.FirstOrDefault(x => x.Id == cityId);
         }
 
-        public IEnumerable<PointOfInterest> GetPointOfInterests(int cityId)
+        public IEnumerable<PointOfInterest> GetPointsOfInterestList(int cityId)
         {
             return this.context.PointsOfInterest.Where(x => x.CityId == cityId).ToList();
         }
@@ -56,6 +56,11 @@ namespace FirstApp.Services
         public bool Save()
         {
             return this.context.SaveChanges() >= 0;
+        }
+
+        public void DeletePointOfInterest(PointOfInterest poi)
+        {
+            this.context.PointsOfInterest.Remove(poi);
         }
     }
 }
